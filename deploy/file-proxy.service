@@ -1,0 +1,23 @@
+[Unit]
+Description=Whitelist-only FastAPI file download proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=fileproxy
+Group=fileproxy
+WorkingDirectory=/opt/file-download-proxy
+EnvironmentFile=/etc/file-download-proxy.env
+ExecStart=/opt/file-download-proxy/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8794 --proxy-headers --forwarded-allow-ips=127.0.0.1 --no-access-log
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/file-download-proxy
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

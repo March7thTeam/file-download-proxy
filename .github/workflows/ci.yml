@@ -4,19 +4,35 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: python -m py_compile app.py
-      - run: python -m pytest -q
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install runtime and test dependencies
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Check dependency compatibility
+        run: python -m pip check
+      - name: Compile application
+        run: python -m py_compile app.py
+      - name: Run regression tests
+        run: python -m pytest -q
